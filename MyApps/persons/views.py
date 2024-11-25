@@ -5,9 +5,12 @@ from django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-
+from rest_framework.decorators import api_view
 from MyApps.persons.models import *
 from MyApps.persons.serializers import CustomerSerializer, CustomerListSerializer, EmployeeSerializer, EmployeeListSerializer  
+from django.db.models import Count
+
+from MyApps.shipments.models import Incident
 
 
 # View to handle listing and creating customers
@@ -126,3 +129,35 @@ class EmployeeDetail(APIView):
         employee = self.get_object(pk)
         employee.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET'])
+def premium_customers_activity(request):
+    data = (
+        Customer.objects.filter(customer_type='PREMIUM')
+        .annotate(total_sent=Count('sent_correspondences'))
+        .values('fullname', 'dni', 'total_sent')
+        .order_by('-total_sent')
+    )
+
+    result = list(data)
+    return Response(result)
+
+
+@api_view(['GET'])
+def unresolved_incidents_by_customer(request, dni):
+
+    try:
+        customer = Customer.objects.get(dni=dni)
+    except Customer.DoesNotExist:
+        return Response({"error": "Customer not found"}, status=404)
+    
+
+    data = Incident.objects.filter(
+        correspondence__sender=customer,
+        resolutionStatus__in=['REPORTED', 'SCALED', 'IN RESOLUTION']
+    ).values(
+        'description',
+        'resolutionStatus',
+        'correspondence__code'
+    )
+    return Response(data)

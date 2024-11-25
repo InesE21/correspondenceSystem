@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import Http404
-
+from django.db.models import Sum
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
@@ -8,7 +8,10 @@ from rest_framework.views import APIView
 from rest_framework import status
 
 from MyApps.logistics.models import Transport, Route, Service
-from MyApps.logistics.serializers import TransportSerializer, RouteSerializer, ServiceSerializer
+from MyApps.logistics.serializers import TransportCapacitySerializer, TransportSerializer, RouteSerializer, ServiceSerializer
+from django.db.models import Count
+from django.db.models import Avg
+from .models import Service
 
 # Views for handling Transport, Route, and Service models.
 # These include functions for listing, creating, retrieving, updating, and deleting instances.
@@ -146,6 +149,44 @@ def service_detail(request, pk):
     elif request.method == 'DELETE':
         service.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+@api_view(['GET'])
+def average_cost_by_service(request):
+    data = Service.objects.values('transportation').annotate(average_cost=Avg('cost'))
+    result = list(data)
+    return Response(result)
+
+@api_view(['GET'])
+def most_used_routes_by_transport(request):
+
+    data = (
+        Route.objects
+        .values('transport__transportation', 'origin', 'destination')
+        .annotate(total_usage=Count('id'))
+        .order_by('-total_usage')
+    )
+
+    result = [
+        {
+            "transport_type": item['transport__transportation'],
+            "route_origin": item['origin'],
+            "route_destination": item['destination'],
+            "total_usage": item['total_usage'],
+        }
+        for item in data
+    ]
+    return Response(result)
+
+@api_view(['GET'])
+def transport_capacity_by_type(request):
+    data = (
+        Transport.objects
+        .values('transportation')
+        .annotate(total_capacity=Sum('capacity'))
+        .order_by('transportation')
+    )
+    serializer = TransportCapacitySerializer(data, many=True)
+    return Response(serializer.data)
 
 
 # class RouteTransportList(APIView):

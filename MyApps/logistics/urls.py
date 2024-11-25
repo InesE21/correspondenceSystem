@@ -7,12 +7,15 @@ These endpoints provide CRUD operations for Transport, Service, and Route models
 
 from django.urls import path
 from MyApps.logistics.views import (
+    most_used_routes_by_transport,
+    transport_capacity_by_type,
     transport_list,
     transport_detail,
     service_list,
     service_detail,
     route_list,
-    route_detail
+    route_detail,
+    average_cost_by_service
 )
 
 urlpatterns = [
@@ -30,4 +33,10 @@ urlpatterns = [
     path('route/', route_list, name='route_list'),
     # URL for retrieving, updating, or deleting a specific route by ID
     path('route/<int:pk>/', route_detail, name='route_detail'),
+
+    path('route/most-used-routes/', most_used_routes_by_transport, name='most-used-routes'),
+
+    path('service/average-cost/', average_cost_by_service, name='average-cost'),
+
+    path('transport/capacity-by-type/', transport_capacity_by_type, name='transport-capacity-by-type'),
 ]

@@ -34,6 +34,10 @@ class ServiceSerializer(serializers.ModelSerializer):
         model = Service  # Associated model
         fields = "__all__"  # Include all fields from the model
 
+class TransportCapacitySerializer(serializers.Serializer):
+    transport_type = serializers.CharField(source='transportation')
+    total_capacity = serializers.IntegerField()
+
 # Serializer for the RouteTransport model (currently commented in the data model)
 # class RouteTransportSerializer(serializers.ModelSerializer):
 #     """

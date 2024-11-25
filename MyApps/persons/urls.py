@@ -1,5 +1,5 @@
 from django.urls import path
-from MyApps.persons.views import CustomerList, CustomerDetail, EmployeeList, EmployeeDetail
+from MyApps.persons.views import CustomerList, CustomerDetail, EmployeeList, EmployeeDetail, premium_customers_activity, unresolved_incidents_by_customer
 
 # URL patterns for the `persons` app
 urlpatterns = [
@@ -14,4 +14,8 @@ urlpatterns = [
     
     # Endpoint for retrieving, updating, and deleting a specific employee by primary key
     path('employee/<int:pk>', EmployeeDetail.as_view(), name='employee_detail'),
+
+    path('customer/premium-customers-activity/', premium_customers_activity, name='premium-customers'),
+
+    path('customer/unresolved-incidents/<int:dni>/', unresolved_incidents_by_customer, name='unresolved-incidents'),
 ]

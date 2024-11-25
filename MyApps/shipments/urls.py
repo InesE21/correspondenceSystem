@@ -1,5 +1,7 @@
 from django.urls import path
 from MyApps.shipments.views import (
+    get_pending_shipments,
+    shipments_by_branch_and_status,
     shipping_list,
     shipping_detail,
     correspondence_list,
@@ -24,4 +26,8 @@ urlpatterns = [
     path('incident/', incident_list),
     # Endpoint for retrieving, updating, or deleting a specific incident by its primary key (pk)
     path('incident/<int:pk>/', incident_detail),
+
+    path('shipping/by-branch-status/', shipments_by_branch_and_status),
+
+    path('shipping/pending/<int:dni>/', get_pending_shipments),
 ]

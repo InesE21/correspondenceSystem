@@ -21,4 +21,18 @@ class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident  # Specifies the model to serialize
         fields = "__all__"  # Includes all fields from the Incident model in the serialized output
-"
+
+class ShipmentByBranchSerializer(serializers.Serializer):
+    branch_name = serializers.CharField(source='branch__nameB')
+    shipment_status = serializers.CharField(source='status')
+    total_shipments = serializers.IntegerField()
+
+class ShipmentSerializer(serializers.ModelSerializer):
+    correspondence_code = serializers.CharField(source='correspondence.code')
+    shipment_status = serializers.CharField(source='status')
+    branch_name = serializers.CharField(source='branch.nameB')
+    employee_name = serializers.CharField(source='employee.fullname')
+
+    class Meta:
+        model = Shipping
+        fields = ['id', 'correspondence_code', 'shipment_status', 'branch_name', 'employee_name']

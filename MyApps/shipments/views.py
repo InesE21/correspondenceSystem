@@ -1,11 +1,13 @@
 # Import necessary modules
+from django.db.models import Count
 from django.shortcuts import render  # (Not used in this code but useful for rendering templates if needed)
 from django.http import Http404  # For handling "Not Found" exceptions (not used directly in this code)
 from rest_framework.response import Response  # For sending structured API responses
 from rest_framework.decorators import api_view  # To define function-based API views
 from rest_framework import status  # Provides standard HTTP response status codes
 from MyApps.shipments.models import Correspondence, Shipping, Incident  # Importing models for database interaction
-from MyApps.shipments.serializers import CorrespondenceSerializer, ShippingSerializer, IncidentSerializer  # Importing serializers
+from MyApps.shipments.serializers import CorrespondenceSerializer, ShipmentByBranchSerializer, ShippingSerializer, IncidentSerializer  # Importing serializers
+from django.db.models import Q
 
 # Function-based API view for Correspondence list operations
 @api_view(['GET', 'POST'])
@@ -143,3 +145,35 @@ def incident_detail(request, pk):
     elif request.method == 'DELETE':  # Delete a specific incident
         incident.delete()  # Remove the record from the database
         return Response(status=status.HTTP_204_NO_CONTENT)  # Return a "No Content" response
+
+
+@api_view(['GET'])
+def shipments_by_branch_and_status(request):
+    data = (
+        Shipping.objects
+        .values('branch__nameB', 'status')
+        .annotate(total_shipments=Count('id'))
+        .order_by('branch__nameB', 'status')
+    )
+    serializer = ShipmentByBranchSerializer(data, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def get_pending_shipments(request, dni):
+    try:
+        print(f"Received DNI: {dni}")
+        
+        shipments = Shipping.objects.filter(
+            correspondence__receiver__dni=dni,
+            status__in=["AT ORIGIN", "ON THE WAY"]
+        ).select_related('correspondence', 'correspondence__receiver', 'branch', 'employee')
+
+        if not shipments.exists():
+            return Response({"message": "No shipments found for the given DNI."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ShippingSerializer(shipments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
